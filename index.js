@@ -12,8 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // mongoDB connection string
-const mongoURI =
-    `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@cluster0.ya0qxn8.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const mongoURI = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@cluster0.ya0qxn8.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // mongodb client
 const client = new MongoClient(mongoURI);
@@ -24,8 +23,18 @@ async function run() {
         const carsCollection = db.collection("cars");
 
         // Get all cars
-        app.get("/api/cars", async (req, res) => {
+        app.get("/api/cars/all", async (req, res) => {
             const result = await carsCollection.find({}).toArray();
+            res.send(result);
+        });
+
+        // Get Cars user email
+        app.get("/api/cars", async (req, res) => {
+            const query = req.query;
+            if (!query.userEmail) {
+                return res.status(400).send({ error: "Email query parameter is required" });
+            }
+            const result = await carsCollection.find(query).toArray();
             res.send(result);
         });
 
