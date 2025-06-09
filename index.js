@@ -24,9 +24,16 @@ async function run() {
         const carsCollection = db.collection("cars");
 
         // Get all cars
-        app.get("/cars", async (req, res) => {
+        app.get("/api/cars", async (req, res) => {
             const result = await carsCollection.find({}).toArray();
             res.send(result);
+        });
+
+        // post a new car
+        app.post("/api/cars", async (req, res) => {
+            const car = req.body;
+            const result = await carsCollection.insertOne(car);
+            res.status(201).send(result);
         });
 
         // Start the server
