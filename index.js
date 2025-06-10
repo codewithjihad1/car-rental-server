@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 const port = 3000;
 
 // config dotenv
@@ -32,7 +32,9 @@ async function run() {
         app.get("/api/cars", async (req, res) => {
             const query = req.query;
             if (!query.userEmail) {
-                return res.status(400).send({ error: "Email query parameter is required" });
+                return res
+                    .status(400)
+                    .send({ error: "Email query parameter is required" });
             }
             const result = await carsCollection.find(query).toArray();
             res.send(result);
@@ -43,6 +45,18 @@ async function run() {
             const car = req.body;
             const result = await carsCollection.insertOne(car);
             res.status(201).send(result);
+        });
+
+        // update a car
+        app.put("/api/cars/:id", async (req, res) => {
+            const id = req.params.id;
+            const carData = req.body;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: carData,
+            };
+            const result = await carsCollection.updateOne(filter, updateDoc);
+            res.send(result);
         });
 
         // Start the server
