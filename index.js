@@ -58,6 +58,17 @@ async function run() {
             res.send(result);
         });
 
+        // get car by id
+        app.get("/api/cars/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const car = await carsCollection.findOne(filter);
+            if (!car) {
+                return res.status(404).send({ error: "Car not found" });
+            }
+            res.send(car);
+        });
+
         // post a new car
         app.post("/api/cars", async (req, res) => {
             const car = req.body;
