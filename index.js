@@ -40,6 +40,16 @@ async function run() {
             res.send(result);
         });
 
+        // recently added cars
+        app.get("/api/cars/recently-added", async (req, res) => {
+            const result = await carsCollection
+                .find({})
+                .sort({ _id: -1 })
+                .limit(8)
+                .toArray();
+            res.send(result);
+        });
+
         // post a new car
         app.post("/api/cars", async (req, res) => {
             const car = req.body;
