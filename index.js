@@ -50,6 +50,14 @@ async function run() {
             res.send(result);
         });
 
+        // get available cars
+        app.get("/api/cars/available", async (req, res) => {
+            const result = await carsCollection
+                .find({ availability: "Available" })
+                .toArray();
+            res.send(result);
+        });
+
         // post a new car
         app.post("/api/cars", async (req, res) => {
             const car = req.body;
