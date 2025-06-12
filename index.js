@@ -21,6 +21,7 @@ async function run() {
     try {
         const db = client.db("car-rental");
         const carsCollection = db.collection("cars");
+        const bookingsCollection = db.collection("bookings");
 
         // Get all cars
         app.get("/api/cars/all", async (req, res) => {
@@ -73,6 +74,13 @@ async function run() {
         app.post("/api/cars", async (req, res) => {
             const car = req.body;
             const result = await carsCollection.insertOne(car);
+            res.status(201).send(result);
+        });
+
+        // create a booking
+        app.post("/api/bookings", async (req, res) => {
+            const booking = req.body;
+            const result = await bookingsCollection.insertOne(booking);
             res.status(201).send(result);
         });
 
