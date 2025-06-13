@@ -1,6 +1,13 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const admin = require("firebase-admin");
+
+const serviceAccount = require("./firebase-adminsdk.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
 const { MongoClient, ObjectId } = require("mongodb");
 const port = 3000;
 
@@ -17,6 +24,34 @@ const mongoURI = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGOD
 // mongodb client
 const client = new MongoClient(mongoURI);
 
+// Verify Firebase ID Token Middleware
+const verifyFirebaseToken = async (req, res, next) => {
+    const idToken = req.headers.authorization?.split("Bearer ")[1];
+    if (!idToken) {
+        return res.status(401).send({ error: "Unauthorized" });
+    }
+
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        req.decoded = decodedToken;
+        next();
+    } catch (error) {
+        console.error("Error verifying Firebase ID token:", error);
+        res.status(401).send({ error: "Unauthorized" });
+    }
+}
+
+// verify user email middleware
+const verifyTokenEmail = async (req, res, next) => {
+    const email = req.query.userEmail;
+
+    if (email !== req.decoded.email) {
+        return res.status(403).send({ error: "Forbidden" });        
+    }
+
+    next();
+}
+
 async function run() {
     try {
         const db = client.db("car-rental");
@@ -30,7 +65,7 @@ async function run() {
         });
 
         // Get Cars user email
-        app.get("/api/cars", async (req, res) => {
+        app.get("/api/cars", verifyFirebaseToken, verifyTokenEmail, async (req, res) => {
             const query = req.query;
             if (!query.userEmail) {
                 return res
@@ -41,7 +76,7 @@ async function run() {
             res.send(result);
         });
 
-        // recently added cars
+        // get recently added cars
         app.get("/api/cars/recently-added", async (req, res) => {
             const result = await carsCollection
                 .find({})
@@ -70,6 +105,25 @@ async function run() {
             res.send(car);
         });
 
+        // get bookings by user email
+        app.get("/api/bookings", verifyFirebaseToken, verifyTokenEmail, async (req, res) => {
+            const query = req.query;
+            if (!query.userEmail) {
+                return res
+                    .status(400)
+                    .send({ error: "Email query parameter is required" });
+            }
+            const result = await bookingsCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        // get booking count by car id
+        app.get("/api/bookings/count/:carId", async (req, res) => {
+            const carId = req.params.carId;
+            const count = await bookingsCollection.countDocuments({ carId });
+            res.send({ count });
+        });
+
         // post a new car
         app.post("/api/cars", async (req, res) => {
             const car = req.body;
@@ -80,7 +134,18 @@ async function run() {
         // create a booking
         app.post("/api/bookings", async (req, res) => {
             const booking = req.body;
+            const carId = booking.carId;
             const result = await bookingsCollection.insertOne(booking);
+            if (!result.acknowledged) {
+                return res
+                    .status(500)
+                    .send({ error: "Failed to create booking" });
+            }
+
+            const id = { _id: new ObjectId(carId) };
+            await carsCollection.updateOne(id, {
+                $inc: { bookingCount: 1 },
+            });
             res.status(201).send(result);
         });
 
@@ -93,6 +158,17 @@ async function run() {
                 $set: carData,
             };
             const result = await carsCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        });
+
+        // update booking
+        app.patch("/api/bookings/:id", async (req, res) => {
+            const id = req.params.id;
+            const bookingData = req.body;
+            const filter = { _id: new ObjectId(id) };
+            const result = await bookingsCollection.updateOne(filter, {
+                $set: bookingData,
+            });
             res.send(result);
         });
 
