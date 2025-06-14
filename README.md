@@ -46,7 +46,7 @@ A robust backend API for a car rental system built with Node.js, Express, MongoD
 1. **Clone the repository**
 
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/Programming-Hero-Web-Course4/b11a11-server-side-codewithjihad1.git
     cd server-side
     ```
 
@@ -389,4 +389,4 @@ For issues and questions:
 
 ## 📄 License
 
-This project is part of a car rental system assignment and is intended for educational purposes.
+This project is part of a car rental system is intended for educational purposes.
