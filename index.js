@@ -72,7 +72,7 @@ async function run() {
                     .status(400)
                     .send({ error: "Email query parameter is required" });
             }
-            const result = await carsCollection.find(query).toArray();
+            const result = await carsCollection.find(query).sort({ dateAdded: -1 }).toArray();
             res.send(result);
         });
 
@@ -80,7 +80,7 @@ async function run() {
         app.get("/api/cars/recently-added", async (req, res) => {
             const result = await carsCollection
                 .find({})
-                .sort({ _id: -1 })
+                .sort({ dateAdded: -1 })
                 .limit(8)
                 .toArray();
             res.send(result);
