@@ -81,7 +81,7 @@ async function run() {
             const result = await carsCollection
                 .find({})
                 .sort({ dateAdded: -1 })
-                .limit(8)
+                .limit(6)
                 .toArray();
             res.send(result);
         });
