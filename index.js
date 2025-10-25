@@ -100,13 +100,18 @@ const startServer = async () => {
             });
         });
 
-        // Start the server
-        app.listen(PORT, () => {
-            console.log(`🚀 Server running on http://localhost:${PORT}`);
-        });
+        // Start the server only in non-serverless environment
+        if (process.env.NODE_ENV !== "production") {
+            app.listen(PORT, () => {
+                console.log(`🚀 Server running on http://localhost:${PORT}`);
+            });
+        }
     } catch (error) {
         console.error("❌ Failed to start server:", error.message);
-        process.exit(1);
+        // Don't exit in serverless environment
+        if (process.env.NODE_ENV !== "production") {
+            process.exit(1);
+        }
     }
 };
 
@@ -126,12 +131,16 @@ process.on("SIGTERM", async () => {
 // Handle uncaught exceptions
 process.on("uncaughtException", (error) => {
     console.error("❌ Uncaught Exception:", error);
-    process.exit(1);
+    if (process.env.NODE_ENV !== "production") {
+        process.exit(1);
+    }
 });
 
 process.on("unhandledRejection", (reason, promise) => {
     console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
-    process.exit(1);
+    if (process.env.NODE_ENV !== "production") {
+        process.exit(1);
+    }
 });
 
 // Start the server
