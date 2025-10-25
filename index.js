@@ -62,12 +62,25 @@ const startServer = async () => {
         // Get collections
         const carsCollection = db.collection("cars");
         const bookingsCollection = db.collection("bookings");
+        const couponsCollection = db.collection("coupons");
+
+        // Initialize default coupons if collection is empty
+        const couponCount = await couponsCollection.countDocuments();
+        if (couponCount === 0) {
+            const { DEFAULT_COUPONS } = require("./models/coupons");
+            await couponsCollection.insertMany(DEFAULT_COUPONS);
+            console.log("✅ Default coupons initialized");
+        }
 
         // Initialize routes
         app.use("/api/cars", carsRoutes(carsCollection));
         app.use(
             "/api/bookings",
-            bookingsRoutes(bookingsCollection, carsCollection)
+            bookingsRoutes(
+                bookingsCollection,
+                carsCollection,
+                couponsCollection
+            )
         );
 
         // 404 handler
